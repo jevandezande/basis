@@ -1,0 +1,53 @@
+[tool.poetry]
+name = "basis"
+version = "0.1.0"
+description = "Basis"
+authors = ["Jonathon Vandezande"]
+keywords = []
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/jevandezande/basis"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+basis_set_exchange = "*"
+ipython = "*"
+
+[tool.poetry.group.dev.dependencies]
+black = "==23.1"
+mypy = "*"
+pre-commit = "*"
+ruff = "*"
+
+[tool.poetry.group.test.dependencies]
+pytest = "*"
+pytest-cov = "*"
+
+[tool.poetry.scripts]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+]
+
+[tool.mypy]
+files = ["basis", "tests"]
+strict = true
+pretty = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--doctest-modules"
+doctest_optionflags = "NORMALIZE_WHITESPACE"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
