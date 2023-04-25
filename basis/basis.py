@@ -2,8 +2,19 @@ from collections import defaultdict
 
 import basis_set_exchange as bse  # type:ignore
 
+# fmt:off
+atomic_numbers = [
+    'X', 'H', 'He',
+    'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
+    'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', # noqa: E501
+    'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', # noqa: E501
+    'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', # noqa: E501
+    'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cp', 'Uut', 'Uuq', 'Uup', 'Uuh', 'Uus', 'Uuo', # noqa: E501
+]
+# fmt:on
 
-def count(basis: str) -> dict[str, tuple[list[int], list[int]]]:
+
+def count(basis: str) -> dict[int, tuple[list[int], list[int]]]:
     data = bse.get_basis(basis)["elements"]
     counts = {}
     for element, values in data.items():
@@ -21,12 +32,12 @@ def count(basis: str) -> dict[str, tuple[list[int], list[int]]]:
         for key, val in uncontracted.items():
             uncon[key] = val
 
-        counts[element] = (con, uncon)
+        counts[int(element)] = (con, uncon)
 
     return counts
 
 
-def find_max_am(counts: dict[str, dict[str, tuple[list[int], list[int]]]]) -> int:
+def find_max_am(counts: dict[str, dict[int, tuple[list[int], list[int]]]]) -> int:
     return max(
         len(element_data[0])
         for basis_data in counts.values()
@@ -37,12 +48,11 @@ def find_max_am(counts: dict[str, dict[str, tuple[list[int], list[int]]]]) -> in
 def table(basis_sets: list[str], elements: list[int] | None = None) -> None:
     counts = {basis: count(basis) for basis in basis_sets}
     elements = elements or list(range(1, 37))
-    element_list = list(map(str, elements))
     counts = {
         basis: {
             element: element_data
             for element, element_data in basis_data.items()
-            if element in element_list
+            if element in elements
         }
         for basis, basis_data in counts.items()
     }
@@ -57,10 +67,10 @@ def table(basis_sets: list[str], elements: list[int] | None = None) -> None:
     out += "  " + f" |  {'  '.join(AM[:max_am])}" * 2 * len(basis_sets) + "\n"
     out += HLINE
 
-    for element in element_list:
-        if element in ["3", "11", "19", "37", "55", "87"]:  # starting a new row
+    for element in elements:
+        if element in [3, 11, 19, 37, 55, 87]:  # starting a new row
             out += HLINE
-        out += f"{element:>2} |"
+        out += f"{atomic_numbers[element]:2} |"
 
         def count_str(basis: str) -> str:
             if element not in counts[basis]:
