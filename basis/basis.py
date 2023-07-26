@@ -84,8 +84,3 @@ def table(basis_sets: list[str], elements: list[int] | None = None) -> None:
         out += " |".join(map(count_str, basis_sets)) + "\n"
 
     print(out)
-
-
-if __name__ == "__main__":
-    # print(count("def2-SVP"))
-    table(["def2-SVP", "def2-TZVP", "def2-QZVP"])

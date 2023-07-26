@@ -24,6 +24,7 @@ pytest = "*"
 pytest-cov = "*"
 
 [tool.poetry.scripts]
+basis = "basis.cli:basis_cli"
 
 [tool.black]
 line-length = 100
