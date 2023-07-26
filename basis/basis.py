@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Iterable, TypeVar
 
 import basis_set_exchange as bse  # type:ignore
 
@@ -12,6 +13,7 @@ atomic_numbers = [
     'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cp', 'Uut', 'Uuq', 'Uup', 'Uuh', 'Uus', 'Uuo', # noqa: E501
 ]
 # fmt:on
+atomic_dict = dict(zip(atomic_numbers, range(len(atomic_numbers))))
 
 
 def count(basis: str) -> dict[int, tuple[list[int], list[int]]]:
@@ -38,21 +40,29 @@ def count(basis: str) -> dict[int, tuple[list[int], list[int]]]:
 
 
 def find_max_am(counts: dict[str, dict[int, tuple[list[int], list[int]]]]) -> int:
-    return max(
-        len(element_data[0])
-        for basis_data in counts.values()
-        for element_data in basis_data.values()
-    )
+    if not (
+        ams := [
+            len(element_data[0])
+            for basis_data in counts.values()
+            for element_data in basis_data.values()
+        ]
+    ):
+        return 0
+    return max(ams)
 
 
-def table(basis_sets: list[str], elements: list[int] | None = None) -> None:
+def table(basis_sets: list[str], elements: Iterable[int | str] | None = None) -> str:
     counts = {basis: count(basis) for basis in basis_sets}
-    elements = elements or list(range(1, 37))
+    if elements is None:
+        element_list = list(range(1, 37))
+    else:
+        element_list = sorted(elements_to_an(elements))
+
     counts = {
         basis: {
             element: element_data
             for element, element_data in basis_data.items()
-            if element in elements
+            if element in element_list
         }
         for basis, basis_data in counts.items()
     }
@@ -65,11 +75,13 @@ def table(basis_sets: list[str], elements: list[int] | None = None) -> None:
 
     out = "   | " + " | ".join(f"{basis:^{BASIS_WIDTH}s}" for basis in basis_sets) + "\n"
     out += "  " + f" |  {'  '.join(AM[:max_am])}" * 2 * len(basis_sets) + "\n"
-    out += HLINE
 
-    for element in elements:
-        if element in [3, 11, 19, 37, 55, 87]:  # starting a new row
+    row = 0
+    rows = [0, 2, 10, 18, 36, 54, 86]
+    for element in element_list:
+        if element > rows[row]:
             out += HLINE
+            row = searchsorted(element, rows)
         out += f"{atomic_numbers[element]:2} |"
 
         def count_str(basis: str) -> str:
@@ -83,4 +95,38 @@ def table(basis_sets: list[str], elements: list[int] | None = None) -> None:
 
         out += " |".join(map(count_str, basis_sets)) + "\n"
 
-    print(out)
+    return out
+
+
+def elements_to_an(elements: Iterable[int | str]) -> list[int]:
+    es: list[int] = []
+    for element in elements:
+        if isinstance(element, int):
+            es.append(element)
+        elif element.isdigit():
+            es.append(int(element))
+        else:
+            es.append(atomic_dict[element])
+    return es
+
+
+T = TypeVar("T", int, float, str)
+
+
+def searchsorted(value: T, target: Iterable[T], reversed: bool = False) -> int:
+    """
+    Find where in a sorted iterable a value would fit.
+
+    Note: values matching existing values are placed after
+    :param value: value to insert
+    :param target: the iterable to examine
+    :param reversed: is the target sorted in descending order
+    """
+    i = 0
+    for i, v in enumerate(target):
+        if reversed:
+            if value > v:
+                return i
+        elif value < v:
+            return i
+    return i
