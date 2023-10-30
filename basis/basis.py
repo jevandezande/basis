@@ -1,7 +1,10 @@
 from collections import defaultdict
-from typing import Iterable, TypeVar
+from typing import Container, Iterable, TypeVar
 
 import basis_set_exchange as bse  # type:ignore
+
+# {element: (contracted_counts, uncontracted_counts)}
+BASIS_COUNT = dict[int, tuple[list[int], list[int]]]
 
 # fmt:off
 atomic_numbers = [
@@ -16,7 +19,7 @@ atomic_numbers = [
 atomic_dict = dict(zip(atomic_numbers, range(len(atomic_numbers))))
 
 
-def count(basis: str) -> dict[int, tuple[list[int], list[int]]]:
+def count(basis: str) -> BASIS_COUNT:
     data = bse.get_basis(basis)["elements"]
     counts = {}
     for element, values in data.items():
@@ -39,7 +42,7 @@ def count(basis: str) -> dict[int, tuple[list[int], list[int]]]:
     return counts
 
 
-def find_max_am(counts: dict[str, dict[int, tuple[list[int], list[int]]]]) -> int:
+def find_max_am(counts: dict[str, BASIS_COUNT]) -> int:
     if not (
         ams := [
             len(element_data[0])
@@ -51,21 +54,53 @@ def find_max_am(counts: dict[str, dict[int, tuple[list[int], list[int]]]]) -> in
     return max(ams)
 
 
-def table(basis_sets: list[str], elements: Iterable[int | str] | None = None) -> str:
-    counts = {basis: count(basis) for basis in basis_sets}
+def filter_unused_elements(
+    counts: dict[str, BASIS_COUNT], elements: Container[int]
+) -> dict[str, BASIS_COUNT]:
+    return {
+        basis: {
+            element: element_data
+            for element, element_data in basis_data.items()
+            if element in elements
+        }
+        for basis, basis_data in counts.items()
+    }
+
+
+def difference(basis1: BASIS_COUNT, basis2: BASIS_COUNT) -> BASIS_COUNT:
+    """Find the difference between basis sets"""
+
+    def diff(c1: list[int], c2: list[int]) -> list[int]:
+        return [b - a for a, b in zip(c1, c2)]
+
+    b2_set = set(basis2)
+    return {
+        element: (
+            diff(counts[0], basis2[element][0]),
+            diff(counts[1], basis2[element][1]),
+        )
+        for element, counts in basis1.items()
+        if element in b2_set
+    }
+
+
+def table(
+    basis_sets: list[str], elements: Iterable[int | str] | None = None, diff: bool = False
+) -> str:
+    counts: dict[str, BASIS_COUNT] = {basis: count(basis) for basis in basis_sets}
     if elements is None:
         element_list = list(range(1, 37))
     else:
         element_list = sorted(elements_to_an(elements))
 
-    counts = {
-        basis: {
-            element: element_data
-            for element, element_data in basis_data.items()
-            if element in element_list
-        }
-        for basis, basis_data in counts.items()
-    }
+    counts = filter_unused_elements(counts, element_list)
+
+    if diff:
+        if len(counts) != 2:
+            raise ValueError(f"Can only compare two basis sets at a time, got: {len(basis_sets)=}")
+
+        counts["Δ"] = difference(*(counts.values()))
+        basis_sets += ["Δ"]
 
     AM = "spdfgh"
     max_am = find_max_am(counts)
@@ -98,16 +133,18 @@ def table(basis_sets: list[str], elements: Iterable[int | str] | None = None) ->
     return out
 
 
+def element_to_an(element: int | str) -> int:
+    """Convert element to atomic number"""
+    if isinstance(element, int):
+        return element
+    elif element.isdigit():
+        return int(element)
+    return atomic_dict[element]
+
+
 def elements_to_an(elements: Iterable[int | str]) -> list[int]:
-    es: list[int] = []
-    for element in elements:
-        if isinstance(element, int):
-            es.append(element)
-        elif element.isdigit():
-            es.append(int(element))
-        else:
-            es.append(atomic_dict[element])
-    return es
+    """Convert elements to atomic number"""
+    return list(map(element_to_an, elements))
 
 
 T = TypeVar("T", int, float, str)
