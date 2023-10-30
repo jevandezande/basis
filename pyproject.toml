@@ -11,13 +11,11 @@ repository = "https://github.com/jevandezande/basis"
 [tool.poetry.dependencies]
 python = "^3.11"
 basis_set_exchange = "*"
-ipython = "*"
 
 [tool.poetry.group.dev.dependencies]
-black = "==23.1"
 mypy = "*"
 pre-commit = "*"
-ruff = "*"
+ruff = ">=0.1.3"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
@@ -25,10 +23,6 @@ pytest-cov = "*"
 
 [tool.poetry.scripts]
 basis = "basis.cli:basis_cli"
-
-[tool.black]
-line-length = 100
-target-version = ["py311"]
 
 [tool.ruff]
 line-length = 100
