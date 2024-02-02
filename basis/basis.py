@@ -26,9 +26,19 @@ def count(basis: str) -> BASIS_COUNT:
         contracted: dict[int, int] = defaultdict(int)
         uncontracted: dict[int, int] = defaultdict(int)
         for function in values["electron_shells"]:
-            for am in function["angular_momentum"]:
-                contracted[am] += 1
-                uncontracted[am] += len(function["exponents"])
+            angular_momenta = function["angular_momentum"]
+            coefficients = function["coefficients"]
+            exponents = function["exponents"]
+            for am in angular_momenta:
+                # Generally contracted basis sets only specify a single angular momentum,
+                # but have multiple sets of coefficients
+                if len(angular_momenta) == 1 and isinstance(coefficients, list):
+                    contracted[am] += len(coefficients)
+                else:
+                    contracted[am] += 1
+
+                # Generally contracted basis sets share exponents
+                uncontracted[am] += len(exponents)
 
         con = [0] * (max(contracted) + 1)
         uncon = [0] * (max(contracted) + 1)
