@@ -112,13 +112,13 @@ def table(
         counts["Δ"] = difference(*(counts.values()))
         basis_sets += ["Δ"]
 
-    AM = "spdfgh"
+    AM = "spdfghiklmnoqrtuvwxyz"
     max_am = find_max_am(counts)
-    BASIS_WIDTH = 6 * max_am + 1
+    BASIS_WIDTH = 6 * max_am + 3
     COL_WIDTH = 3 * max_am
-    HLINE = "-" * (len(basis_sets) * (BASIS_WIDTH + 3) + 2) + "\n"
+    HLINE = "-" * (len(basis_sets) * (BASIS_WIDTH + 1) + 2) + "\n"
 
-    out = "   | " + " | ".join(f"{basis:^{BASIS_WIDTH}s}" for basis in basis_sets) + "\n"
+    out = "   |" + "|".join(f"{basis:^{BASIS_WIDTH}s}" for basis in basis_sets) + "\n"
     out += "  " + f" |  {'  '.join(AM[:max_am])}" * 2 * len(basis_sets) + "\n"
 
     row = 0
@@ -136,9 +136,9 @@ def table(
             con = "".join(f"{c:>3d}" for c in counts[basis][element][0])
             uncon = "".join(f"{c:>3d}" for c in counts[basis][element][1])
 
-            return f"{uncon:<{COL_WIDTH}} →{con:<{COL_WIDTH}}"
+            return f"{uncon:<{COL_WIDTH}} →{con:<{COL_WIDTH}} "
 
-        out += " |".join(map(count_str, basis_sets)) + "\n"
+        out += "|".join(map(count_str, basis_sets)).rstrip() + "\n"
 
     return out
 
