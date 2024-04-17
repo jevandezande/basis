@@ -9,13 +9,13 @@ readme = "README.md"
 repository = "https://github.com/jevandezande/basis"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 basis_set_exchange = "*"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "*"
 pre-commit = "*"
-ruff = ">=0.1.3"
+ruff = ">=0.3"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
@@ -26,6 +26,8 @@ basis = "basis.cli:basis_cli"
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
