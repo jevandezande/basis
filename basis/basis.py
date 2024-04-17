@@ -20,6 +20,16 @@ atomic_dict = dict(zip(atomic_numbers, range(len(atomic_numbers))))
 
 
 def count(basis: str) -> BASIS_COUNT:
+    """
+    Count the number of contracted and uncontracted basis functions for each element in a basis set
+
+    :param basis: the basis set to count
+    :return: a dictionary of element to a tuple of contracted and uncontracted counts
+
+    >>> sto3g = count("sto-3g")
+    >>> sto3g[1], sto3g[6], sto3g[9], sto3g[18]
+    (([1], [3]), ([2, 1], [6, 3]), ([2, 1], [6, 3]), ([3, 2], [9, 6]))
+    """
     data = bse.get_basis(basis)["elements"]
     counts = {}
     for element, values in data.items():
@@ -53,6 +63,15 @@ def count(basis: str) -> BASIS_COUNT:
 
 
 def find_max_am(counts: dict[str, BASIS_COUNT]) -> int:
+    """
+    Find the maximum angular momentum in a basis set
+
+    :param counts: the basis sets to examine
+    :return: the maximum angular momentum
+
+    >>> find_max_am({"sto-3g": count("sto-3g")})
+    3
+    """
     if not (
         ams := [
             len(element_data[0])
@@ -64,21 +83,52 @@ def find_max_am(counts: dict[str, BASIS_COUNT]) -> int:
     return max(ams)
 
 
-def filter_unused_elements(
-    counts: dict[str, BASIS_COUNT], elements: Container[int]
+def filter_unused_elements(counts: BASIS_COUNT, elements: Container[int]) -> BASIS_COUNT:
+    """
+    Filter out elements not in the list of elements
+
+    :param counts: the basis set(s) to filter
+    :param elements: the elements to keep
+    :return: the filtered basis set
+
+    >>> filter_unused_elements(count("sto-3g"), [1, 6, 9, 18])
+    {1: ([1], [3]), 6: ([2, 1], [6, 3]), 9: ([2, 1], [6, 3]), 18: ([3, 2], [9, 6])}
+    """
+    return {element: cs for element, cs in counts.items() if element in elements}
+
+
+def filter_unused_elements_multi(
+    counts: dict[str, BASIS_COUNT],
+    elements: Container[int],
 ) -> dict[str, BASIS_COUNT]:
+    """
+    Filter out elements not in the list of elements
+
+    :param counts: the basis set(s) to filter
+    :param elements: the elements to keep
+    :return: the filtered basis sets
+
+    >>> filter_unused_elements_multi({"sto-3g": count("sto-3g")}, [1, 6, 9, 18])
+    {'sto-3g': {1: ([1], [3]), 6: ([2, 1], [6, 3]), 9: ([2, 1], [6, 3]), 18: ([3, 2], [9, 6])}}
+    """
     return {
-        basis: {
-            element: element_data
-            for element, element_data in basis_data.items()
-            if element in elements
-        }
-        for basis, basis_data in counts.items()
+        basis: filter_unused_elements(basis_data, elements) for basis, basis_data in counts.items()
     }
 
 
 def difference(basis1: BASIS_COUNT, basis2: BASIS_COUNT) -> BASIS_COUNT:
-    """Find the difference between basis sets"""
+    """
+    Find the difference between basis sets
+
+    :param basis1: the first basis set
+    :param basis2: the second basis set
+    :return: the difference between the basis sets
+
+    >>> sto3g = filter_unused_elements(count("sto-3g"), [1, 6, 9, 18])
+    >>> sto6g = filter_unused_elements(count("sto-6g"), [1, 6, 9, 18])
+    >>> difference(sto3g, sto6g)
+    {1: ([0], [3]), 6: ([0, 0], [6, 3]), 9: ([0, 0], [6, 3]), 18: ([0, 0], [9, 6])}
+    """
 
     def diff(c1: list[int], c2: list[int]) -> list[int]:
         return [b - a for a, b in zip(c1, c2)]
@@ -95,15 +145,36 @@ def difference(basis1: BASIS_COUNT, basis2: BASIS_COUNT) -> BASIS_COUNT:
 
 
 def table(
-    basis_sets: list[str], elements: Iterable[int | str] | None = None, diff: bool = False
+    basis_sets: list[str],
+    elements: Iterable[int | str] | None = None,
+    diff: bool = False,
 ) -> str:
+    """
+    Generate a table of basis set counts
+
+    :param basis_sets: the basis sets to compare
+    :param elements: the elements to include
+    :param diff: include a difference column
+    :return: the table
+
+    >>> print(table(["sto-3g", "sto-6g"], [1, 6, 9, 18], diff=True))
+       |    sto-3g     |    sto-6g     |       Δ
+       |  s  p |  s  p |  s  p |  s  p |  s  p |  s  p
+    --------------------------------------------------
+    H  |  3    →  1    |  6    →  1    |  3    →  0
+    --------------------------------------------------
+    C  |  6  3 →  2  1 | 12  6 →  2  1 |  6  3 →  0  0
+    F  |  6  3 →  2  1 | 12  6 →  2  1 |  6  3 →  0  0
+    --------------------------------------------------
+    Ar |  9  6 →  3  2 | 18 12 →  3  2 |  9  6 →  0  0
+    """
     counts: dict[str, BASIS_COUNT] = {basis: count(basis) for basis in basis_sets}
     if elements is None:
         element_list = list(range(1, 37))
     else:
         element_list = sorted(elements_to_an(elements))
 
-    counts = filter_unused_elements(counts, element_list)
+    counts = filter_unused_elements_multi(counts, element_list)
 
     if diff:
         if len(counts) != 2:
@@ -144,7 +215,17 @@ def table(
 
 
 def element_to_an(element: int | str) -> int:
-    """Convert element to atomic number"""
+    """
+    Convert element to atomic number
+
+    :param element: the element to convert
+    :return: the atomic number
+
+    >>> element_to_an(1)
+    1
+    >>> element_to_an("He")
+    2
+    """
     if isinstance(element, int):
         return element
     elif element.isdigit():
@@ -153,7 +234,15 @@ def element_to_an(element: int | str) -> int:
 
 
 def elements_to_an(elements: Iterable[int | str]) -> list[int]:
-    """Convert elements to atomic number"""
+    """
+    Convert elements to atomic number
+
+    :param elements: the elements to convert
+    :return: the atomic numbers
+
+    >>> elements_to_an([36, "W"])
+    [36, 74]
+    """
     return list(map(element_to_an, elements))
 
 
@@ -168,6 +257,11 @@ def searchsorted(value: T, target: Iterable[T], reversed: bool = False) -> int:
     :param value: value to insert
     :param target: the iterable to examine
     :param reversed: is the target sorted in descending order
+
+    >>> searchsorted(3, [2, 3, 4, 5])
+    2
+    >>> searchsorted(3, [5, 4, 3, 2], reversed=True)
+    3
     """
     i = 0
     for i, v in enumerate(target):
