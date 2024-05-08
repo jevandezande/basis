@@ -10,7 +10,7 @@ repository = "https://github.com/jevandezande/basis"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-basis_set_exchange = "*"
+basis_set_exchange = ">=0.10"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "*"
