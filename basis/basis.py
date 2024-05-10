@@ -18,6 +18,12 @@ atomic_numbers = [
 # fmt:on
 atomic_dict = dict(zip(atomic_numbers, range(len(atomic_numbers))))
 
+spherical_harmonics = "spdfghiklmnoqrtuvwxyz"
+spherical_harmonics_counts = {am: 2 * i + 1 for i, am in enumerate(spherical_harmonics)}
+cartesian_harmonics_counts = {
+    am: (i + 1) * (i + 2) // 2 for i, am in enumerate(spherical_harmonics)
+}
+
 
 def count(basis: str) -> BASIS_COUNT:
     """
@@ -60,6 +66,27 @@ def count(basis: str) -> BASIS_COUNT:
         counts[int(element)] = (con, uncon)
 
     return counts
+
+
+def count_atomic_basis_functions(contracted_counts: list[int]) -> list[int]:
+    """
+    Count the resulting number of atomic basis functions from the basis set
+
+    :param contracted_counts: the number of contracted basis functions
+    :return: the number of atomic basis functions
+
+    >>> sto3g = count("sto-3g")
+    >>> H, C, F, Ar = sto3g[1][0], sto3g[6][0], sto3g[9][0], sto3g[18][0]
+    >>> count_atomic_basis_functions(H)
+    [1]
+    >>> count_atomic_basis_functions(C)
+    [2, 3]
+    >>> count_atomic_basis_functions(F)
+    [2, 3]
+    >>> count_atomic_basis_functions(Ar)
+    [3, 6]
+    """
+    return [s * c for s, c in zip(spherical_harmonics_counts.values(), contracted_counts)]
 
 
 def find_max_am(counts: dict[str, BASIS_COUNT]) -> int:
