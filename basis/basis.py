@@ -1,4 +1,5 @@
 from collections import defaultdict
+from itertools import zip_longest
 from typing import Container, Iterable, TypeVar
 
 import basis_set_exchange as bse  # type:ignore
@@ -157,16 +158,16 @@ def difference(basis1: BASIS_COUNT, basis2: BASIS_COUNT) -> BASIS_COUNT:
     {1: ([0], [3]), 6: ([0, 0], [6, 3]), 9: ([0, 0], [6, 3]), 18: ([0, 0], [9, 6])}
     """
 
-    def diff(c1: list[int], c2: list[int]) -> list[int]:
-        return [b - a for a, b in zip(c1, c2)]
+    def diff(c1: Iterable[int], c2: Iterable[int]) -> list[int]:
+        return [b - a for a, b in zip_longest(c1, c2, fillvalue=0)]
 
     b2_set = set(basis2)
     return {
         element: (
-            diff(counts[0], basis2[element][0]),
-            diff(counts[1], basis2[element][1]),
+            diff(uncon, basis2[element][0]),
+            diff(con, basis2[element][1]),
         )
-        for element, counts in basis1.items()
+        for element, (uncon, con) in basis1.items()
         if element in b2_set
     }
 

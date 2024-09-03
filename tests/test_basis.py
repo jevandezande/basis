@@ -14,7 +14,7 @@ def test_diff() -> None:
 
     assert len(diff) == 86
     assert diff[1] == ([1, 0], [1, 0])
-    assert diff[85] == ([2, 1, 1], [1, 3, 2])
+    assert diff[85] == ([2, 1, 1, 2], [1, 3, 2, 2])
 
 
 def test_generally_contracted() -> None:
