@@ -30,7 +30,7 @@ def count(basis: str) -> BASIS_COUNT:
     """
     Count the number of contracted and uncontracted basis functions for each element in a basis set
 
-    :param basis: the basis set to count
+    :param basis: basis set to count
     :return: a dictionary of element to a tuple of contracted and uncontracted counts
 
     >>> sto3g = count("sto-3g")
@@ -73,8 +73,8 @@ def count_atomic_basis_functions(contracted_counts: list[int]) -> list[int]:
     """
     Count the resulting number of atomic basis functions from the basis set
 
-    :param contracted_counts: the number of contracted basis functions
-    :return: the number of atomic basis functions
+    :param contracted_counts: number of contracted basis functions
+    :return: number of atomic basis functions
 
     >>> sto3g = count("sto-3g")
     >>> H, C, F, Ar = sto3g[1][0], sto3g[6][0], sto3g[9][0], sto3g[18][0]
@@ -94,8 +94,8 @@ def find_max_am(counts: dict[str, BASIS_COUNT]) -> int:
     """
     Find the maximum angular momentum in a basis set
 
-    :param counts: the basis sets to examine
-    :return: the maximum angular momentum
+    :param counts: basis sets to examine
+    :return: maximum angular momentum
 
     >>> find_max_am({"sto-3g": count("sto-3g")})
     3
@@ -115,9 +115,9 @@ def filter_unused_elements(counts: BASIS_COUNT, elements: Container[int]) -> BAS
     """
     Filter out elements not in the list of elements
 
-    :param counts: the basis set(s) to filter
-    :param elements: the elements to keep
-    :return: the filtered basis set
+    :param counts: basis set(s) to filter
+    :param elements: elements to keep
+    :return: filtered basis set
 
     >>> filter_unused_elements(count("sto-3g"), [1, 6, 9, 18])
     {1: ([1], [3]), 6: ([2, 1], [6, 3]), 9: ([2, 1], [6, 3]), 18: ([3, 2], [9, 6])}
@@ -132,9 +132,9 @@ def filter_unused_elements_multi(
     """
     Filter out elements not in the list of elements
 
-    :param counts: the basis set(s) to filter
-    :param elements: the elements to keep
-    :return: the filtered basis sets
+    :param counts: basis set(s) to filter
+    :param elements: elements to keep
+    :return: filtered basis sets
 
     >>> filter_unused_elements_multi({"sto-3g": count("sto-3g")}, [1, 6, 9, 18])
     {'sto-3g': {1: ([1], [3]), 6: ([2, 1], [6, 3]), 9: ([2, 1], [6, 3]), 18: ([3, 2], [9, 6])}}
@@ -148,9 +148,9 @@ def difference(basis1: BASIS_COUNT, basis2: BASIS_COUNT) -> BASIS_COUNT:
     """
     Find the difference between basis sets
 
-    :param basis1: the first basis set
-    :param basis2: the second basis set
-    :return: the difference between the basis sets
+    :param basis1: first basis set
+    :param basis2: second basis set
+    :return: difference between the basis sets
 
     >>> sto3g = filter_unused_elements(count("sto-3g"), [1, 6, 9, 18])
     >>> sto6g = filter_unused_elements(count("sto-6g"), [1, 6, 9, 18])
@@ -180,10 +180,10 @@ def table(
     """
     Generate a table of basis set counts
 
-    :param basis_sets: the basis sets to compare
-    :param elements: the elements to include
+    :param basis_sets: basis sets to compare
+    :param elements: elements to include
     :param diff: include a difference column
-    :return: the table
+    :return: table
 
     >>> print(table(["sto-3g", "sto-6g"], [1, 6, 9, 18], diff=True))
        |    sto-3g     |    sto-6g     |       Δ
@@ -246,8 +246,8 @@ def element_to_an(element: int | str) -> int:
     """
     Convert element to atomic number
 
-    :param element: the element to convert
-    :return: the atomic number
+    :param element: element to convert
+    :return: atomic number
 
     >>> element_to_an(1)
     1
@@ -265,8 +265,8 @@ def elements_to_an(elements: Iterable[int | str]) -> list[int]:
     """
     Convert elements to atomic number
 
-    :param elements: the elements to convert
-    :return: the atomic numbers
+    :param elements: elements to convert
+    :return: atomic numbers
 
     >>> elements_to_an([36, "W"])
     [36, 74]
@@ -283,7 +283,7 @@ def searchsorted(value: T, target: Iterable[T], reversed: bool = False) -> int:
 
     Note: values matching existing values are placed after
     :param value: value to insert
-    :param target: the iterable to examine
+    :param target: iterable to examine
     :param reversed: is the target sorted in descending order
 
     >>> searchsorted(3, [2, 3, 4, 5])
