@@ -92,6 +92,33 @@ def count_atomic_basis_functions(contracted_counts: list[int]) -> list[int]:
     ]
 
 
+def spherical_count(basis_counts: BASIS_COUNT) -> BASIS_COUNT:
+    """Convert contracted basis function counts to spherical basis function counts.
+
+    For each contracted basis function of angular momentum l, there are 2l+1 spherical
+    basis functions. For example, 3 d-type contracted functions produce 3 x 5 = 15
+    spherical basis functions.
+
+    :param basis_counts: basis set counts to convert
+    :return: spherical basis function counts (contracted only, uncontracted set to [])
+
+    >>> sto3g = count("sto-3g")
+    >>> spherical = spherical_count(sto3g)
+    >>> spherical[1]
+    ([1], [])
+    >>> spherical[6]
+    ([2, 3], [])
+    >>> spherical[9]
+    ([2, 3], [])
+    >>> spherical[18]
+    ([3, 6], [])
+    """
+    return {
+        element: (count_atomic_basis_functions(contracted), [])
+        for element, (contracted, _) in basis_counts.items()
+    }
+
+
 def find_max_am(counts: dict[str, BASIS_COUNT]) -> int:
     """Find the maximum angular momentum in a basis set.
 
@@ -175,12 +202,15 @@ def table(
     elements: Iterable[int | str] | None = None,
     diff: bool = False,
     format: Literal["plain", "csv"] = "plain",
+    spherical: bool = False,
 ) -> str:
     """Generate a table of basis set counts.
 
     :param basis_sets: basis sets to compare
     :param elements: elements to include
     :param diff: include a difference column
+    :param format: output format
+    :param spherical: show spherical basis function counts instead of contracted/uncontracted
     :return: table
 
     >>> print(table(["sto-3g", "sto-6g"], [1, 6, 9, 18], diff=True))
@@ -195,6 +225,10 @@ def table(
     Ar |  9  6 →  3  2 | 18 12 →  3  2 |  9  6 →  0  0
     """
     counts: dict[str, BASIS_COUNT] = {basis: count(basis) for basis in basis_sets}
+
+    if spherical:
+        counts = {basis: spherical_count(basis_counts) for basis, basis_counts in counts.items()}
+
     if elements is None:
         element_list = list(range(1, 37))
     else:
@@ -211,9 +245,9 @@ def table(
 
     match format:
         case "plain":
-            return plain_table(counts, element_list)
+            return plain_table(counts, element_list, spherical)
         case "csv":
-            return csv_table(counts, element_list)
+            return csv_table(counts, element_list, spherical)
         case _:
             raise ValueError(f"Unsupported format: {format}")
 
@@ -221,15 +255,26 @@ def table(
 def plain_table(
     counts: dict[str, BASIS_COUNT],
     element_list: list[int],
+    spherical: bool = False,
 ) -> str:
     """Generate a plain text table of basis set counts."""
     max_am = find_max_am(counts)
-    BASIS_WIDTH = 6 * max_am + 3
-    COL_WIDTH = 3 * max_am
-    HLINE = "-" * (len(counts) * (BASIS_WIDTH + 1) + 2) + "\n"
 
-    out = "   |" + "|".join(f"{basis:^{BASIS_WIDTH}s}" for basis in counts) + "\n"
-    out += "  " + f" |  {'  '.join(spherical_harmonics[:max_am])}" * 2 * len(counts) + "\n"
+    # Header
+    if spherical:
+        BASIS_WIDTH = 3 * max_am + 1
+        HLINE = "-" * (len(counts) * (BASIS_WIDTH + 1) + 2) + "\n"
+
+        out = "   |" + "|".join(f"{basis:^{BASIS_WIDTH}s}" for basis in counts) + "\n"
+        out += "  " + f" |  {'  '.join(spherical_harmonics[:max_am])}" * len(counts) + "\n"
+    else:
+        # Normal mode: show both uncontracted and contracted with arrow
+        BASIS_WIDTH = 6 * max_am + 3
+        COL_WIDTH = 3 * max_am
+        HLINE = "-" * (len(counts) * (BASIS_WIDTH + 1) + 2) + "\n"
+
+        out = "   |" + "|".join(f"{basis:^{BASIS_WIDTH}s}" for basis in counts) + "\n"
+        out += "  " + f" |  {'  '.join(spherical_harmonics[:max_am])}" * 2 * len(counts) + "\n"
 
     row = 0
     rows = [0, 2, 10, 18, 36, 54, 86]
@@ -238,10 +283,17 @@ def plain_table(
         if element not in counts[basis]:
             return " " * BASIS_WIDTH
 
-        con = "".join(f"{c:>3d}" for c in counts[basis][element][0])
-        uncon = "".join(f"{c:>3d}" for c in counts[basis][element][1])
+        contracted = counts[basis][element][0]
 
-        return f"{uncon:<{COL_WIDTH}} →{con:<{COL_WIDTH}} "
+        if spherical:
+            # Pad contracted list to max_am length and show blank spaces for zero counts
+            padded = contracted + [0] * (max_am - len(contracted))
+            return "".join(f"{c:>3d}" if c else "   " for c in padded)
+        else:
+            uncontracted = counts[basis][element][1]
+            con = "".join(f"{c:>3d}" for c in contracted)
+            uncon = "".join(f"{c:>3d}" for c in uncontracted)
+            return f"{uncon:<{COL_WIDTH}} →{con:<{COL_WIDTH}}"
 
     for element in element_list:
         if element > rows[row]:
@@ -249,14 +301,15 @@ def plain_table(
             row = searchsorted(element, rows)
         out += f"{atomic_numbers[element]:2} |"
 
-        out += "|".join(count_str(element, basis) for basis in counts).rstrip() + "\n"
+        out += " |".join(count_str(element, basis) for basis in counts).rstrip() + "\n"
 
-    return out.strip()
+    return out.rstrip()
 
 
 def csv_table(
     counts: dict[str, BASIS_COUNT],
     element_list: list[int],
+    spherical: bool = False,
 ) -> str:
     """Generate a CSV table of basis set counts.
 
@@ -277,16 +330,26 @@ def csv_table(
         field = str(value).replace('"', '\\"')
         return f'"{field}"'
 
-    rows = ["basis,element,contracted,uncontracted"]
-    for basis, basis_counts in counts.items():
-        for element in element_list:
-            if element not in basis_counts:
-                continue
+    if spherical:
+        rows = ["basis,element,spherical"]
+        for basis, basis_counts in counts.items():
+            for element in element_list:
+                if element not in basis_counts:
+                    continue
 
-            contracted, uncontracted = basis_counts[element]
-            rows.append(
-                f"{basis},{element},{_quote(contracted)},{_quote(uncontracted)}",
-            )
+                contracted, _uncontracted = basis_counts[element]
+                rows.append(f"{basis},{element},{_quote(contracted)}")
+    else:
+        rows = ["basis,element,contracted,uncontracted"]
+        for basis, basis_counts in counts.items():
+            for element in element_list:
+                if element not in basis_counts:
+                    continue
+
+                contracted, uncontracted = basis_counts[element]
+                rows.append(
+                    f"{basis},{element},{_quote(contracted)},{_quote(uncontracted)}",
+                )
 
     return "\n".join(rows)
 

@@ -1,6 +1,6 @@
 """Test the reading and writing of basis sets."""
 
-from basis.basis import count, csv_table, difference
+from basis.basis import count, csv_table, difference, spherical_count
 
 
 def test_count() -> None:
@@ -69,3 +69,36 @@ aug-cc-pCVQZ,6,"[9, 8, 6, 4, 2]","[16, 10, 6, 4, 2]"
 aug-cc-pCVQZ,9,"[9, 8, 6, 4, 2]","[16, 10, 6, 4, 2]"\
 """
     assert result == expected
+
+
+def test_spherical_count() -> None:
+    """Test that spherical basis function counting works correctly."""
+    sto3g = count("sto-3g")
+    spherical = spherical_count(sto3g)
+
+    # H: 1 s-function → 1 x 1 = 1 spherical function
+    assert spherical[1] == ([1], [])
+
+    # C: 2 s-functions, 1 p-function → 2 x 1 = 2, 1 x 3 = 3
+    assert spherical[6] == ([2, 3], [])
+
+    # Test d-orbitals: Sc has s, p, and d functions
+    assert spherical[21] == ([4, 9, 5], [])  # 4sx1, 3px3, 1dx5
+
+    # Test that uncontracted is always empty
+    assert spherical[1][1] == []
+    assert spherical[6][1] == []
+    assert spherical[21][1] == []
+
+
+def test_spherical_count_higher_am() -> None:
+    """Test spherical counting with higher angular momentum basis sets."""
+    cc_pvtz = count("cc-pVTZ")
+    spherical = spherical_count(cc_pvtz)
+
+    # H: 3 s-functions, 2 p-functions, 1 d-function
+    # → 3x1=3, 2x3=6, 1x5=5
+    assert spherical[1] == ([3, 6, 5], [])
+
+    # C: 4 s, 3 p, 2 d, 1 f → 4x1=4, 3x3=9, 2x5=10, 1x7=7
+    assert spherical[6] == ([4, 9, 10, 7], [])

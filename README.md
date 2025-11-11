@@ -9,7 +9,7 @@
 
 # Usage
 ```
-❯ poetry run basis def2-SVP def2-TZVP -e H He 3 6 11
+❯ uv run python -m basis.cli def2-SVP def2-TZVP -e H He 3 6 11
    |         def2-SVP          |         def2-TZVP
    |  s  p  d  f |  s  p  d  f |  s  p  d  f |  s  p  d  f
 ----------------------------------------------------------

@@ -21,6 +21,12 @@ def basis_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         default="plain",
         help="Output format [%(default)s].",
     )
+    parser.add_argument(
+        "-s",
+        "--spherical",
+        action="store_true",
+        help="Show spherical basis function counts (contracted functions x spherical harmonics).",
+    )
 
     return parser
 
@@ -29,7 +35,7 @@ def basis_cli() -> None:
     """Run the basis set examination CLI."""
     args = basis_parser().parse_args()
 
-    print(table(args.basis, args.elements, args.diff, args.format))
+    print(table(args.basis, args.elements, args.diff, args.format, args.spherical))
 
 
 if __name__ == "__main__":
