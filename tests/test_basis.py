@@ -1,13 +1,17 @@
+"""Test the reading and writing of basis sets."""
+
 from basis.basis import count, difference
 
 
 def test_count() -> None:
+    """Test that the function counts are correct."""
     def2_svp = count("def2-svp")
     assert len(def2_svp) == 86
     assert def2_svp[1] == ([2, 1], [4, 1])
 
 
 def test_diff() -> None:
+    """Test that difference in counts works."""
     def2_svp = count("def2-svp")
     def2_tzvp = count("def2-tzvp")
     diff = difference(def2_svp, def2_tzvp)
@@ -18,6 +22,7 @@ def test_diff() -> None:
 
 
 def test_generally_contracted() -> None:
+    """Test generally contracted basis sets."""
     cc_pVTZ = count("cc-pVTZ")
 
     assert cc_pVTZ[1] == ([3, 2, 1], [5, 2, 1])
@@ -27,6 +32,7 @@ def test_generally_contracted() -> None:
 
 
 def test_sto() -> None:
+    """Test STO-nG basis sets."""
     sto_3g = count("sto-3g")
 
     assert sto_3g[1] == ([1], [3])

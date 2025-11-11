@@ -1,3 +1,5 @@
+"""Module for counting basis functions in basis sets using Basis Set Exchange."""
+
 from collections import defaultdict
 from itertools import zip_longest
 from typing import Container, Iterable, TypeVar
@@ -17,7 +19,7 @@ atomic_numbers = [
     'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cp', 'Uut', 'Uuq', 'Uup', 'Uuh', 'Uus', 'Uuo', # noqa: E501
 ]
 # fmt:on
-atomic_dict = dict(zip(atomic_numbers, range(len(atomic_numbers))))
+atomic_dict = dict(zip(atomic_numbers, range(len(atomic_numbers)), strict=True))
 
 spherical_harmonics = "spdfghiklmnoqrtuvwxyz"
 spherical_harmonics_counts = {am: 2 * i + 1 for i, am in enumerate(spherical_harmonics)}
@@ -27,8 +29,7 @@ cartesian_harmonics_counts = {
 
 
 def count(basis: str) -> BASIS_COUNT:
-    """
-    Count the number of contracted and uncontracted basis functions for each element in a basis set
+    """Count the number of contracted and uncontracted basis functions in a basis set.
 
     :param basis: basis set to count
     :return: a dictionary of element to a tuple of contracted and uncontracted counts
@@ -70,8 +71,7 @@ def count(basis: str) -> BASIS_COUNT:
 
 
 def count_atomic_basis_functions(contracted_counts: list[int]) -> list[int]:
-    """
-    Count the resulting number of atomic basis functions from the basis set
+    """Count the resulting number of atomic basis functions from the basis set.
 
     :param contracted_counts: number of contracted basis functions
     :return: number of atomic basis functions
@@ -87,12 +87,13 @@ def count_atomic_basis_functions(contracted_counts: list[int]) -> list[int]:
     >>> count_atomic_basis_functions(Ar)
     [3, 6]
     """
-    return [s * c for s, c in zip(spherical_harmonics_counts.values(), contracted_counts)]
+    return [
+        s * c for s, c in zip(spherical_harmonics_counts.values(), contracted_counts, strict=False)
+    ]
 
 
 def find_max_am(counts: dict[str, BASIS_COUNT]) -> int:
-    """
-    Find the maximum angular momentum in a basis set
+    """Find the maximum angular momentum in a basis set.
 
     :param counts: basis sets to examine
     :return: maximum angular momentum
@@ -112,8 +113,7 @@ def find_max_am(counts: dict[str, BASIS_COUNT]) -> int:
 
 
 def filter_unused_elements(counts: BASIS_COUNT, elements: Container[int]) -> BASIS_COUNT:
-    """
-    Filter out elements not in the list of elements
+    """Filter out elements not in the list of elements.
 
     :param counts: basis set(s) to filter
     :param elements: elements to keep
@@ -129,8 +129,7 @@ def filter_unused_elements_multi(
     counts: dict[str, BASIS_COUNT],
     elements: Container[int],
 ) -> dict[str, BASIS_COUNT]:
-    """
-    Filter out elements not in the list of elements
+    """Filter out elements not in the list of elements.
 
     :param counts: basis set(s) to filter
     :param elements: elements to keep
@@ -145,8 +144,7 @@ def filter_unused_elements_multi(
 
 
 def difference(basis1: BASIS_COUNT, basis2: BASIS_COUNT) -> BASIS_COUNT:
-    """
-    Find the difference between basis sets
+    """Find the difference between basis sets.
 
     :param basis1: first basis set
     :param basis2: second basis set
@@ -177,8 +175,7 @@ def table(
     elements: Iterable[int | str] | None = None,
     diff: bool = False,
 ) -> str:
-    """
-    Generate a table of basis set counts
+    """Generate a table of basis set counts.
 
     :param basis_sets: basis sets to compare
     :param elements: elements to include
@@ -222,29 +219,29 @@ def table(
 
     row = 0
     rows = [0, 2, 10, 18, 36, 54, 86]
+
+    def count_str(element: int, basis: str) -> str:
+        if element not in counts[basis]:
+            return " " * BASIS_WIDTH
+
+        con = "".join(f"{c:>3d}" for c in counts[basis][element][0])
+        uncon = "".join(f"{c:>3d}" for c in counts[basis][element][1])
+
+        return f"{uncon:<{COL_WIDTH}} →{con:<{COL_WIDTH}} "
+
     for element in element_list:
         if element > rows[row]:
             out += HLINE
             row = searchsorted(element, rows)
         out += f"{atomic_numbers[element]:2} |"
 
-        def count_str(basis: str) -> str:
-            if element not in counts[basis]:
-                return " " * BASIS_WIDTH
-
-            con = "".join(f"{c:>3d}" for c in counts[basis][element][0])
-            uncon = "".join(f"{c:>3d}" for c in counts[basis][element][1])
-
-            return f"{uncon:<{COL_WIDTH}} →{con:<{COL_WIDTH}} "
-
-        out += "|".join(map(count_str, basis_sets)).rstrip() + "\n"
+        out += "|".join(count_str(element, basis) for basis in basis_sets).rstrip() + "\n"
 
     return out
 
 
 def element_to_an(element: int | str) -> int:
-    """
-    Convert element to atomic number
+    """Convert element to atomic number.
 
     :param element: element to convert
     :return: atomic number
@@ -262,8 +259,7 @@ def element_to_an(element: int | str) -> int:
 
 
 def elements_to_an(elements: Iterable[int | str]) -> list[int]:
-    """
-    Convert elements to atomic number
+    """Convert elements to atomic number.
 
     :param elements: elements to convert
     :return: atomic numbers
@@ -278,8 +274,7 @@ T = TypeVar("T", int, float, str)
 
 
 def searchsorted(value: T, target: Iterable[T], reversed: bool = False) -> int:
-    """
-    Find where in a sorted iterable a value would fit.
+    """Find where in a sorted iterable a value would fit.
 
     Note: values matching existing values are placed after
     :param value: value to insert
