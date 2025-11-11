@@ -1,50 +1,74 @@
-[tool.poetry]
+[project]
 name = "basis"
-version = "0.1.0"
 description = "Basis"
-authors = ["Jonathon Vandezande"]
-keywords = []
 license = "MIT"
+version = "0.2.0"
 readme = "README.md"
-repository = "https://github.com/jevandezande/basis"
+keywords = []
+authors = [{name = "Jonathon Vandezande"}]
+requires-python = ">=3.13"
+dependencies = [
+    "basis_set_exchange>=0.10"
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-basis_set_exchange = ">=0.10"
-
-[tool.poetry.group.dev.dependencies]
-mypy = "*"
-pre-commit = "*"
-ruff = ">=0.3"
-
-[tool.poetry.group.test.dependencies]
-pytest = "*"
-pytest-cov = "*"
-
-[tool.poetry.scripts]
-basis = "basis.cli:basis_cli"
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3",
+    "pytest>=8.4",
+    "pytest-cov>=7.0",
+    "ruff>=0.14",
+    "ty>=0.0.1a25",
+]
 
 [tool.ruff]
 line-length = 100
 
 [tool.ruff.lint]
 select = [
+    "B",  # bugbear
+    "D",  # pydocstyle
     "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
     "F",  # pyflakes
     "I",  # isort
+    "N",  # pep8-naming conventions
+    "W",  # pycodestyle warnings
+    "C4", # comprehensions
+    "PL", # pylint
+    "PT", # flake8-pytest-style
+    "PIE", # misc lints
+    "PYI", # flake8-pyi
+    "TID", # tidy imports
+    "TCH", # type-checking imports
+    "RUF", # Ruff-specific rules
+    "RSE", # flake8-raise
+    "ICN001", # unconventional-import-alias
+]
+ignore = [
+    "N806", # Non-lowercase variable in function
+    "PLR0911", # Too many returns
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments to function call
+    "PLR0914", # Too many locals
+    "PLR0915", # Too many statements
+    "PLR1702", # Too many nested-blocks
+
+    "D100",  # Missing docstring in public module
+    "D103",  # Missing docstring in public function
+    "D104",  # Missing docstring in public package
+    "PLR2004",  # Magic value used in comparison
+    "D212",  # Multi-line docstring summary should start at the first line
+    "D415",  # First line should end with a period
+    "B023",  # Function definition does not bind loop variable
+    "B905",  # zip with no explicit strict parameter
 ]
 
-[tool.mypy]
-files = ["basis", "tests"]
-strict = true
-pretty = true
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "basis"]
 addopts = "--doctest-modules"
 doctest_optionflags = "NORMALIZE_WHITESPACE"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

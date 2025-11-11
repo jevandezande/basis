@@ -19,3 +19,7 @@ def basis_cli() -> None:
     args = basis_parser().parse_args()
 
     print(table(args.basis, args.elements, args.diff))
+
+
+if __name__ == "__main__":
+    basis_cli()

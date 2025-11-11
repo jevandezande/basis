@@ -1,8 +1,10 @@
 # Basis
 
 [![License](https://img.shields.io/github/license/jevandezande/basis)](https://github.com/jevandezande/basis/blob/master/LICENSE)
-[![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jevandezande/basis/test.yml?branch=master)](https://github.com/jevandezande/basis/actions/)
+[![Powered by: uv](https://img.shields.io/badge/-uv-purple)](https://docs.astral.sh/uv)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Typing: ty](https://img.shields.io/badge/typing-ty-EFC621.svg)](https://github.com/astral-sh/ty)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jevandezande/basis/test.yml?branch=master&logo=github-actions)](https://github.com/jevandezande/basis/actions)
 [![Codecov](https://img.shields.io/codecov/c/github/jevandezande/basis)](https://codecov.io/gh/jevandezande/basis)
 
 # Usage
@@ -22,4 +24,4 @@ Na | 10  6  1    →  4  2  1    | 14  8  3    →  5  4  3
 
 
 ## Credits
-This package was created with Cookiecutter and the [jevandezande/poetry-cookiecutter](https://github.com/jevandezande/poetry-cookiecutter) project template.
+This package was created with [Cookiecutter](https://github.com/audreyr/cookiecutter) and the [jevandezande/uv-cookiecutter](https://github.com/jevandezande/uv-cookiecutter) project template.
