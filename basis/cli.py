@@ -14,6 +14,13 @@ def basis_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     parser.add_argument(
         "-d", "--diff", action="store_true", help="Find the difference between two basis sets."
     )
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=("plain", "csv"),
+        default="plain",
+        help="Output format [%(default)s].",
+    )
 
     return parser
 
@@ -22,7 +29,7 @@ def basis_cli() -> None:
     """Run the basis set examination CLI."""
     args = basis_parser().parse_args()
 
-    print(table(args.basis, args.elements, args.diff))
+    print(table(args.basis, args.elements, args.diff, args.format))
 
 
 if __name__ == "__main__":

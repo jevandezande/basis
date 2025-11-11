@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 from itertools import zip_longest
-from typing import Container, Iterable, TypeVar
+from typing import Container, Iterable, Literal, TypeVar
 
 import basis_set_exchange as bse  # type:ignore
 
@@ -174,6 +174,7 @@ def table(
     basis_sets: list[str],
     elements: Iterable[int | str] | None = None,
     diff: bool = False,
+    format: Literal["plain", "csv"] = "plain",
 ) -> str:
     """Generate a table of basis set counts.
 
@@ -208,14 +209,27 @@ def table(
         counts["Δ"] = difference(*(counts.values()))
         basis_sets += ["Δ"]
 
-    AM = "spdfghiklmnoqrtuvwxyz"
+    match format:
+        case "plain":
+            return plain_table(counts, element_list)
+        case "csv":
+            return csv_table(counts, element_list)
+        case _:
+            raise ValueError(f"Unsupported format: {format}")
+
+
+def plain_table(
+    counts: dict[str, BASIS_COUNT],
+    element_list: list[int],
+) -> str:
+    """Generate a plain text table of basis set counts."""
     max_am = find_max_am(counts)
     BASIS_WIDTH = 6 * max_am + 3
     COL_WIDTH = 3 * max_am
-    HLINE = "-" * (len(basis_sets) * (BASIS_WIDTH + 1) + 2) + "\n"
+    HLINE = "-" * (len(counts) * (BASIS_WIDTH + 1) + 2) + "\n"
 
-    out = "   |" + "|".join(f"{basis:^{BASIS_WIDTH}s}" for basis in basis_sets) + "\n"
-    out += "  " + f" |  {'  '.join(AM[:max_am])}" * 2 * len(basis_sets) + "\n"
+    out = "   |" + "|".join(f"{basis:^{BASIS_WIDTH}s}" for basis in counts) + "\n"
+    out += "  " + f" |  {'  '.join(spherical_harmonics[:max_am])}" * 2 * len(counts) + "\n"
 
     row = 0
     rows = [0, 2, 10, 18, 36, 54, 86]
@@ -235,9 +249,46 @@ def table(
             row = searchsorted(element, rows)
         out += f"{atomic_numbers[element]:2} |"
 
-        out += "|".join(count_str(element, basis) for basis in basis_sets).rstrip() + "\n"
+        out += "|".join(count_str(element, basis) for basis in counts).rstrip() + "\n"
 
-    return out
+    return out.strip()
+
+
+def csv_table(
+    counts: dict[str, BASIS_COUNT],
+    element_list: list[int],
+) -> str:
+    """Generate a CSV table of basis set counts.
+
+    >>> counts = {"sto-3g": count("sto-3g"), "def2-svp": count("def2-svp")}
+    >>> print(csv_table(counts, [1, 6, 9, 18]))
+    basis,element,contracted,uncontracted
+    sto-3g,1,"[1]","[3]"
+    sto-3g,6,"[2, 1]","[6, 3]"
+    sto-3g,9,"[2, 1]","[6, 3]"
+    sto-3g,18,"[3, 2]","[9, 6]"
+    def2-svp,1,"[2, 1]","[4, 1]"
+    def2-svp,6,"[3, 2, 1]","[7, 4, 1]"
+    def2-svp,9,"[3, 2, 1]","[7, 4, 1]"
+    def2-svp,18,"[4, 3, 1]","[10, 7, 1]"
+    """
+
+    def _quote(value: list[int]) -> str:
+        field = str(value).replace('"', '\\"')
+        return f'"{field}"'
+
+    rows = ["basis,element,contracted,uncontracted"]
+    for basis, basis_counts in counts.items():
+        for element in element_list:
+            if element not in basis_counts:
+                continue
+
+            contracted, uncontracted = basis_counts[element]
+            rows.append(
+                f"{basis},{element},{_quote(contracted)},{_quote(uncontracted)}",
+            )
+
+    return "\n".join(rows)
 
 
 def element_to_an(element: int | str) -> int:
