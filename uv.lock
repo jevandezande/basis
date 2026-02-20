@@ -23,7 +23,7 @@ wheels = [
 [[package]]
 name = "basis"
 version = "0.2.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "basis-set-exchange" },
 ]

@@ -5,6 +5,7 @@ from itertools import zip_longest
 from typing import Container, Iterable, Literal, TypeVar
 
 import basis_set_exchange as bse  # type:ignore
+from basis_set_exchange import manip  # type:ignore
 
 # {element: (contracted_counts, uncontracted_counts)}
 BASIS_COUNT = dict[int, tuple[list[int], list[int]]]
@@ -232,7 +233,7 @@ def table(
     if elements is None:
         element_list = list(range(1, 37))
     else:
-        element_list = sorted(elements_to_an(elements))
+        element_list = sorted(parse_elements(elements))
 
     counts = filter_unused_elements_multi(counts, element_list)
 
@@ -382,6 +383,130 @@ def elements_to_an(elements: Iterable[int | str]) -> list[int]:
     [36, 74]
     """
     return list(map(element_to_an, elements))
+
+
+def parse_elements(tokens: Iterable[int | str]) -> list[int]:
+    """Parse element tokens into a list of atomic numbers, expanding ranges.
+
+    Each token is either a single element (symbol or atomic number) or a range of
+    the form ``start-end`` where both endpoints are inclusive and may be symbols or
+    atomic numbers.  Tokens are whitespace- or argument-separated; the hyphen is used
+    exclusively as a range separator.
+
+    :param tokens: iterable of element tokens (e.g. ``["H", "Li-Ne", "19-20"]``)
+    :return: sorted, deduplicated list of atomic numbers
+
+    >>> parse_elements(["H"])
+    [1]
+    >>> parse_elements(["Li-Ne"])
+    [3, 4, 5, 6, 7, 8, 9, 10]
+    >>> parse_elements(["H", "Li-Ne", "19"])
+    [1, 3, 4, 5, 6, 7, 8, 9, 10, 19]
+    >>> parse_elements(["3-5", "Ne"])
+    [3, 4, 5, 10]
+    """
+    result: set[int] = set()
+    for token in tokens:
+        s = str(token)
+        if "-" in s:
+            left, right = s.split("-", 1)
+            start = element_to_an(left)
+            end = element_to_an(right)
+            if start > end:
+                raise ValueError(f"Invalid range {s!r}: start must be <= end")
+            result.update(range(start, end + 1))
+        else:
+            result.add(element_to_an(s))
+    return sorted(result)
+
+
+def am_letter_to_int(letter: str) -> int:
+    """Convert an angular momentum letter label to its integer value.
+
+    :param letter: angular momentum label (e.g. 's', 'p', 'd', 'f')
+    :return: integer angular momentum value
+
+    >>> am_letter_to_int('s')
+    0
+    >>> am_letter_to_int('p')
+    1
+    >>> am_letter_to_int('d')
+    2
+    >>> am_letter_to_int('f')
+    3
+    """
+    if letter not in spherical_harmonics:
+        raise ValueError(f"Unknown angular momentum label: {letter!r}")
+    return spherical_harmonics.index(letter)
+
+
+def remove_angular_momentum(
+    basis_dict: dict,
+    am_to_remove: set[int],
+    elements: set[int] | None = None,
+) -> dict:
+    """Remove shells with specified angular momenta from a basis set dictionary.
+
+    Multi-angular-momentum shells (e.g. sp, spd) are split into single-AM shells
+    before filtering so that only the targeted AM is removed.
+
+    :param basis_dict: BSE basis set dictionary (from bse.get_basis or bse.read_formatted_basis_*)
+    :param am_to_remove: set of integer angular momentum values to remove
+    :param elements: atomic numbers of elements to edit; ``None`` edits all elements
+    :return: new basis set dictionary with the specified shells removed from the target elements
+    """
+    result = manip.uncontract_spdf(basis_dict)
+    for z, element_data in result["elements"].items():
+        if elements is not None and int(z) not in elements:
+            continue
+        element_data["electron_shells"] = [
+            shell
+            for shell in element_data["electron_shells"]
+            if not set(shell["angular_momentum"]).issubset(am_to_remove)
+        ]
+    return result
+
+
+def edit_basis(
+    basis: str | None,
+    elements: Iterable[int | str] | None = None,
+    remove: Iterable[str] | None = None,
+    fmt: str = "nwchem",
+    input_file: str | None = None,
+) -> str:
+    """Fetch or read a basis set, optionally remove angular momentum types, and format it.
+
+    When *input_file* is given the basis set is read from that local file (enabling
+    multi-round editing).  Otherwise the basis set is fetched from the Basis Set
+    Exchange by name.
+
+    When *elements* is specified, AM removal applies only to those elements; all other
+    elements in the basis set are written unchanged.
+
+    :param basis: BSE basis set name; required when *input_file* is not provided
+    :param elements: elements whose shells will be edited; ``None`` edits all elements
+    :param remove: angular momentum letter labels to remove (e.g. ``['f', 'g']``)
+    :param fmt: output format key accepted by BSE (default ``'nwchem'``)
+    :param input_file: path to a local formatted basis set file to read instead of BSE
+    :return: formatted basis set string
+
+    >>> result = edit_basis("sto-3g", elements=["H", "C"], remove=["p"], fmt="nwchem")
+    >>> "H    S" in result and "C    P" not in result
+    True
+    """
+    if input_file is not None:
+        basis_dict: dict = bse.read_formatted_basis_file(input_file)
+    else:
+        if basis is None:
+            raise ValueError("Either 'basis' or 'input_file' must be provided")
+        basis_dict = bse.get_basis(basis)
+
+    if remove:
+        element_set = set(parse_elements(elements)) if elements is not None else None
+        am_to_remove = {am_letter_to_int(letter) for letter in remove}
+        basis_dict = remove_angular_momentum(basis_dict, am_to_remove, element_set)
+
+    return bse.write_formatted_basis_str(basis_dict, fmt)
 
 
 T = TypeVar("T", int, float, str)
