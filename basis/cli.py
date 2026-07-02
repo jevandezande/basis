@@ -1,9 +1,9 @@
 """Command-line interface for basis set examination and editing."""
 
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 
-import basis_set_exchange as bse  # type:ignore
+import basis_set_exchange as bse
 
 from .basis import edit_basis, guess_format, table
 
@@ -88,21 +88,21 @@ def basis_parser() -> ArgumentParser:
     return parser
 
 
-def show_cli(args: object) -> None:
+def show_cli(args: Namespace) -> None:
     """Run the 'show' subcommand."""
-    print(table(args.basis, args.elements, args.diff, args.format, args.spherical))  # type:ignore[attr-defined]
+    print(table(args.basis, args.elements, args.diff, args.format, args.spherical))
 
 
-def edit_cli(args: object) -> None:
+def edit_cli(args: Namespace) -> None:
     """Run the 'edit' subcommand."""
-    basis = args.basis  # type:ignore[attr-defined]
-    input_file = args.input  # type:ignore[attr-defined]
-    output = args.output  # type:ignore[attr-defined]
+    basis = args.basis
+    input_file = args.input
+    output = args.output
 
     if basis is None and input_file is None:
         sys.exit("error: one of 'basis' or '--input' is required")
 
-    fmt = args.format  # type:ignore[attr-defined]
+    fmt = args.format
     if fmt is None:
         if output is not None:
             fmt = guess_format(output)
@@ -115,8 +115,8 @@ def edit_cli(args: object) -> None:
 
     result = edit_basis(
         basis=basis,
-        elements=args.elements,  # type:ignore[attr-defined]
-        remove=args.remove,  # type:ignore[attr-defined]
+        elements=args.elements,
+        remove=args.remove,
         fmt=fmt,
         input_file=input_file,
     )

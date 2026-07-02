@@ -1,5 +1,7 @@
 """Test the reading and writing of basis sets."""
 
+from pathlib import Path
+
 import basis_set_exchange as bse
 import pytest
 
@@ -185,7 +187,7 @@ def test_edit_basis_elements_scope() -> None:
     assert "N    P" in result  # N is untouched
 
 
-def test_edit_basis_from_file(tmp_path: pytest.fixture) -> None:  # type:ignore[valid-type]
+def test_edit_basis_from_file(tmp_path: Path) -> None:
     """Test round-trip: write a basis to file, read it back via --input."""
     # Write a basis set to a temp file
     bd = bse.get_basis("sto-3g", elements=[1, 6])
@@ -201,7 +203,7 @@ def test_edit_basis_from_file(tmp_path: pytest.fixture) -> None:  # type:ignore[
     assert "C    P" not in result
 
 
-def test_edit_basis_multi_round(tmp_path: pytest.fixture) -> None:  # type:ignore[valid-type]
+def test_edit_basis_multi_round(tmp_path: Path) -> None:
     """Test multi-round editing: remove f then remove d from an intermediate file."""
     # Round 1: remove f from C only; full basis written to file
     round1 = edit_basis("def2-TZVP", elements=["C"], remove=["f"], fmt="nwchem")

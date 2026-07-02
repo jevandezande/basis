@@ -1,7 +1,3 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
 name = "basis"
 description = "Basis"
@@ -20,11 +16,12 @@ basis = "basis.cli:basis_cli"
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.3",
-    "pytest>=8.4",
-    "pytest-cov>=7.0",
-    "ruff>=0.14",
-    "ty>=0.0.1a25",
+    "prek>=0.3.13",
+    "pytest>=9",
+    "pytest-cov>=7",
+    "ruff>=0.15",
+    "rumdl>=0.2.27",
+    "ty>=0.0.43",
 ]
 
 [tool.ruff]
@@ -51,6 +48,8 @@ select = [
     "ICN001", # unconventional-import-alias
 ]
 ignore = [
+    "RUF001",  # Ambiguous unicode character in string
+    "RUF002",  # Ambiguous unicode character in docstring
     "N806", # Non-lowercase variable in function
     "PLR0911", # Too many returns
     "PLR0912", # Too many branches
@@ -58,7 +57,8 @@ ignore = [
     "PLR0914", # Too many locals
     "PLR0915", # Too many statements
     "PLR1702", # Too many nested-blocks
-    "PLR2004",  # Magic value used in comparison
+    "PT013",   # Incorrect import of pytest
+    "PLR2004", # Magic value used in comparison
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -69,5 +69,16 @@ convention = "google"
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "basis"]
-addopts = "--doctest-modules"
+addopts = "--doctest-modules --durations=5"
 doctest_optionflags = "NORMALIZE_WHITESPACE"
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.hatch.build.targets.wheel]
+include = ["basis"]
+exclude = ["tests/"]
+
+[tool.hatch.build.targets.wheel.sources]
+"" = "."

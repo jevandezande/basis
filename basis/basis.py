@@ -5,8 +5,8 @@ from collections import defaultdict
 from itertools import zip_longest
 from typing import Container, Iterable, Literal, TypeVar
 
-import basis_set_exchange as bse  # type:ignore
-from basis_set_exchange import manip, writers  # type:ignore
+import basis_set_exchange as bse
+from basis_set_exchange import manip, writers
 
 # {element: (contracted_counts, uncontracted_counts)}
 BASIS_COUNT = dict[int, tuple[list[int], list[int]]]
