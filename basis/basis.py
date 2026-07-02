@@ -33,12 +33,16 @@ cartesian_harmonics_counts = {
 def count(basis: str) -> BASIS_COUNT:
     """Count the number of contracted and uncontracted basis functions in a basis set.
 
-    :param basis: basis set to count
-    :return: a dictionary of element to a tuple of contracted and uncontracted counts
+    Args:
+        basis: basis set to count
 
-    >>> sto3g = count("sto-3g")
-    >>> sto3g[1], sto3g[6], sto3g[9], sto3g[18]
-    (([1], [3]), ([2, 1], [6, 3]), ([2, 1], [6, 3]), ([3, 2], [9, 6]))
+    Returns:
+        Mapping of element to tuple of contracted and uncontracted counts
+
+    Examples:
+        >>> sto3g = count("sto-3g")
+        >>> sto3g[1], sto3g[6], sto3g[9], sto3g[18]
+        (([1], [3]), ([2, 1], [6, 3]), ([2, 1], [6, 3]), ([3, 2], [9, 6]))
     """
     data = bse.get_basis(basis)["elements"]
     counts = {}
@@ -75,19 +79,23 @@ def count(basis: str) -> BASIS_COUNT:
 def count_atomic_basis_functions(contracted_counts: list[int]) -> list[int]:
     """Count the resulting number of atomic basis functions from the basis set.
 
-    :param contracted_counts: number of contracted basis functions
-    :return: number of atomic basis functions
+    Args:
+        contracted_counts: number of contracted basis functions
 
-    >>> sto3g = count("sto-3g")
-    >>> H, C, F, Ar = sto3g[1][0], sto3g[6][0], sto3g[9][0], sto3g[18][0]
-    >>> count_atomic_basis_functions(H)
-    [1]
-    >>> count_atomic_basis_functions(C)
-    [2, 3]
-    >>> count_atomic_basis_functions(F)
-    [2, 3]
-    >>> count_atomic_basis_functions(Ar)
-    [3, 6]
+    Returns:
+        Number of atomic basis functions
+
+    Examples:
+        >>> sto3g = count("sto-3g")
+        >>> H, C, F, Ar = sto3g[1][0], sto3g[6][0], sto3g[9][0], sto3g[18][0]
+        >>> count_atomic_basis_functions(H)
+        [1]
+        >>> count_atomic_basis_functions(C)
+        [2, 3]
+        >>> count_atomic_basis_functions(F)
+        [2, 3]
+        >>> count_atomic_basis_functions(Ar)
+        [3, 6]
     """
     return [
         s * c for s, c in zip(spherical_harmonics_counts.values(), contracted_counts, strict=False)
@@ -101,19 +109,23 @@ def spherical_count(basis_counts: BASIS_COUNT) -> BASIS_COUNT:
     basis functions. For example, 3 d-type contracted functions produce 3 x 5 = 15
     spherical basis functions.
 
-    :param basis_counts: basis set counts to convert
-    :return: spherical basis function counts (contracted only, uncontracted set to [])
+    Args:
+        basis_counts: basis set counts to convert
 
-    >>> sto3g = count("sto-3g")
-    >>> spherical = spherical_count(sto3g)
-    >>> spherical[1]
-    ([1], [])
-    >>> spherical[6]
-    ([2, 3], [])
-    >>> spherical[9]
-    ([2, 3], [])
-    >>> spherical[18]
-    ([3, 6], [])
+    Returns:
+        Spherical basis function counts (contracted only, uncontracted set to [])
+
+    Examples:
+        >>> sto3g = count("sto-3g")
+        >>> spherical = spherical_count(sto3g)
+        >>> spherical[1]
+        ([1], [])
+        >>> spherical[6]
+        ([2, 3], [])
+        >>> spherical[9]
+        ([2, 3], [])
+        >>> spherical[18]
+        ([3, 6], [])
     """
     return {
         element: (count_atomic_basis_functions(contracted), [])
@@ -124,11 +136,15 @@ def spherical_count(basis_counts: BASIS_COUNT) -> BASIS_COUNT:
 def find_max_am(counts: dict[str, BASIS_COUNT]) -> int:
     """Find the maximum angular momentum in a basis set.
 
-    :param counts: basis sets to examine
-    :return: maximum angular momentum
+    Args:
+        counts: basis sets to examine
 
-    >>> find_max_am({"sto-3g": count("sto-3g")})
-    3
+    Returns:
+        Maximum angular momentum
+
+    Examples:
+        >>> find_max_am({"sto-3g": count("sto-3g")})
+        3
     """
     if not (
         ams := [
@@ -144,12 +160,16 @@ def find_max_am(counts: dict[str, BASIS_COUNT]) -> int:
 def filter_unused_elements(counts: BASIS_COUNT, elements: Container[int]) -> BASIS_COUNT:
     """Filter out elements not in the list of elements.
 
-    :param counts: basis set(s) to filter
-    :param elements: elements to keep
-    :return: filtered basis set
+    Args:
+        counts: basis set(s) to filter
+        elements: elements to keep
 
-    >>> filter_unused_elements(count("sto-3g"), [1, 6, 9, 18])
-    {1: ([1], [3]), 6: ([2, 1], [6, 3]), 9: ([2, 1], [6, 3]), 18: ([3, 2], [9, 6])}
+    Returns:
+        Filtered basis set
+
+    Examples:
+        >>> filter_unused_elements(count("sto-3g"), [1, 6, 9, 18])
+        {1: ([1], [3]), 6: ([2, 1], [6, 3]), 9: ([2, 1], [6, 3]), 18: ([3, 2], [9, 6])}
     """
     return {element: cs for element, cs in counts.items() if element in elements}
 
@@ -160,12 +180,16 @@ def filter_unused_elements_multi(
 ) -> dict[str, BASIS_COUNT]:
     """Filter out elements not in the list of elements.
 
-    :param counts: basis set(s) to filter
-    :param elements: elements to keep
-    :return: filtered basis sets
+    Args:
+        counts: basis set(s) to filter
+        elements: elements to keep
 
-    >>> filter_unused_elements_multi({"sto-3g": count("sto-3g")}, [1, 6, 9, 18])
-    {'sto-3g': {1: ([1], [3]), 6: ([2, 1], [6, 3]), 9: ([2, 1], [6, 3]), 18: ([3, 2], [9, 6])}}
+    Returns:
+        Filtered basis sets
+
+    Examples:
+        >>> filter_unused_elements_multi({"sto-3g": count("sto-3g")}, [1, 6, 9, 18])
+        {'sto-3g': {1: ([1], [3]), 6: ([2, 1], [6, 3]), 9: ([2, 1], [6, 3]), 18: ([3, 2], [9, 6])}}
     """
     return {
         basis: filter_unused_elements(basis_data, elements) for basis, basis_data in counts.items()
@@ -175,14 +199,18 @@ def filter_unused_elements_multi(
 def difference(basis1: BASIS_COUNT, basis2: BASIS_COUNT) -> BASIS_COUNT:
     """Find the difference between basis sets.
 
-    :param basis1: first basis set
-    :param basis2: second basis set
-    :return: difference between the basis sets
+    Args:
+        basis1: first basis set
+        basis2: second basis set
 
-    >>> sto3g = filter_unused_elements(count("sto-3g"), [1, 6, 9, 18])
-    >>> sto6g = filter_unused_elements(count("sto-6g"), [1, 6, 9, 18])
-    >>> difference(sto3g, sto6g)
-    {1: ([0], [3]), 6: ([0, 0], [6, 3]), 9: ([0, 0], [6, 3]), 18: ([0, 0], [9, 6])}
+    Returns:
+        Difference between basis sets
+
+    Examples:
+        >>> sto3g = filter_unused_elements(count("sto-3g"), [1, 6, 9, 18])
+        >>> sto6g = filter_unused_elements(count("sto-6g"), [1, 6, 9, 18])
+        >>> difference(sto3g, sto6g)
+        {1: ([0], [3]), 6: ([0, 0], [6, 3]), 9: ([0, 0], [6, 3]), 18: ([0, 0], [9, 6])}
     """
 
     def diff(c1: Iterable[int], c2: Iterable[int]) -> list[int]:
@@ -208,23 +236,30 @@ def table(
 ) -> str:
     """Generate a table of basis set counts.
 
-    :param basis_sets: basis sets to compare
-    :param elements: elements to include
-    :param diff: include a difference column
-    :param format: output format
-    :param spherical: show spherical basis function counts instead of contracted/uncontracted
-    :return: table
+    Args:
+        basis_sets: basis sets to compare
+        elements: elements to include
+        diff: include a difference column
+        format: output format
+        spherical: show spherical basis function counts instead of contracted/uncontracted
 
-    >>> print(table(["sto-3g", "sto-6g"], [1, 6, 9, 18], diff=True))
-       |    sto-3g     |    sto-6g     |       Δ
-       |  s  p |  s  p |  s  p |  s  p |  s  p |  s  p
-    --------------------------------------------------
-    H  |  3    →  1    |  6    →  1    |  3    →  0
-    --------------------------------------------------
-    C  |  6  3 →  2  1 | 12  6 →  2  1 |  6  3 →  0  0
-    F  |  6  3 →  2  1 | 12  6 →  2  1 |  6  3 →  0  0
-    --------------------------------------------------
-    Ar |  9  6 →  3  2 | 18 12 →  3  2 |  9  6 →  0  0
+    Returns:
+        Table
+
+    Raises:
+        ValueError: diff requested for other than two basis sets, or unsupported format
+
+    Examples:
+        >>> print(table(["sto-3g", "sto-6g"], [1, 6, 9, 18], diff=True))
+           |    sto-3g     |    sto-6g     |       Δ
+           |  s  p |  s  p |  s  p |  s  p |  s  p |  s  p
+        --------------------------------------------------
+        H  |  3    →  1    |  6    →  1    |  3    →  0
+        --------------------------------------------------
+        C  |  6  3 →  2  1 | 12  6 →  2  1 |  6  3 →  0  0
+        F  |  6  3 →  2  1 | 12  6 →  2  1 |  6  3 →  0  0
+        --------------------------------------------------
+        Ar |  9  6 →  3  2 | 18 12 →  3  2 |  9  6 →  0  0
     """
     counts: dict[str, BASIS_COUNT] = {basis: count(basis) for basis in basis_sets}
 
@@ -315,17 +350,18 @@ def csv_table(
 ) -> str:
     """Generate a CSV table of basis set counts.
 
-    >>> counts = {"sto-3g": count("sto-3g"), "def2-svp": count("def2-svp")}
-    >>> print(csv_table(counts, [1, 6, 9, 18]))
-    basis,element,contracted,uncontracted
-    sto-3g,1,"[1]","[3]"
-    sto-3g,6,"[2, 1]","[6, 3]"
-    sto-3g,9,"[2, 1]","[6, 3]"
-    sto-3g,18,"[3, 2]","[9, 6]"
-    def2-svp,1,"[2, 1]","[4, 1]"
-    def2-svp,6,"[3, 2, 1]","[7, 4, 1]"
-    def2-svp,9,"[3, 2, 1]","[7, 4, 1]"
-    def2-svp,18,"[4, 3, 1]","[10, 7, 1]"
+    Examples:
+        >>> counts = {"sto-3g": count("sto-3g"), "def2-svp": count("def2-svp")}
+        >>> print(csv_table(counts, [1, 6, 9, 18]))
+        basis,element,contracted,uncontracted
+        sto-3g,1,"[1]","[3]"
+        sto-3g,6,"[2, 1]","[6, 3]"
+        sto-3g,9,"[2, 1]","[6, 3]"
+        sto-3g,18,"[3, 2]","[9, 6]"
+        def2-svp,1,"[2, 1]","[4, 1]"
+        def2-svp,6,"[3, 2, 1]","[7, 4, 1]"
+        def2-svp,9,"[3, 2, 1]","[7, 4, 1]"
+        def2-svp,18,"[4, 3, 1]","[10, 7, 1]"
     """
 
     def _quote(value: list[int]) -> str:
@@ -359,13 +395,17 @@ def csv_table(
 def element_to_an(element: int | str) -> int:
     """Convert element to atomic number.
 
-    :param element: element to convert
-    :return: atomic number
+    Args:
+        element: element to convert
 
-    >>> element_to_an(1)
-    1
-    >>> element_to_an("He")
-    2
+    Returns:
+        Atomic number
+
+    Examples:
+        >>> element_to_an(1)
+        1
+        >>> element_to_an("He")
+        2
     """
     if isinstance(element, int):
         return element
@@ -377,11 +417,15 @@ def element_to_an(element: int | str) -> int:
 def elements_to_an(elements: Iterable[int | str]) -> list[int]:
     """Convert elements to atomic number.
 
-    :param elements: elements to convert
-    :return: atomic numbers
+    Args:
+        elements: elements to convert
 
-    >>> elements_to_an([36, "W"])
-    [36, 74]
+    Returns:
+        Atomic numbers
+
+    Examples:
+        >>> elements_to_an([36, "W"])
+        [36, 74]
     """
     return list(map(element_to_an, elements))
 
@@ -394,17 +438,24 @@ def parse_elements(tokens: Iterable[int | str]) -> list[int]:
     atomic numbers.  Tokens are whitespace- or argument-separated; the hyphen is used
     exclusively as a range separator.
 
-    :param tokens: iterable of element tokens (e.g. `["H", "Li-Ne", "19-20"]`)
-    :return: sorted, deduplicated list of atomic numbers
+    Args:
+        tokens: element tokens (e.g. `["H", "Li-Ne", "19-20"]`)
 
-    >>> parse_elements(["H"])
-    [1]
-    >>> parse_elements(["Li-Ne"])
-    [3, 4, 5, 6, 7, 8, 9, 10]
-    >>> parse_elements(["H", "Li-Ne", "19"])
-    [1, 3, 4, 5, 6, 7, 8, 9, 10, 19]
-    >>> parse_elements(["3-5", "Ne"])
-    [3, 4, 5, 10]
+    Returns:
+        Sorted, deduplicated list of atomic numbers
+
+    Raises:
+        ValueError: range start is greater than its end
+
+    Examples:
+        >>> parse_elements(["H"])
+        [1]
+        >>> parse_elements(["Li-Ne"])
+        [3, 4, 5, 6, 7, 8, 9, 10]
+        >>> parse_elements(["H", "Li-Ne", "19"])
+        [1, 3, 4, 5, 6, 7, 8, 9, 10, 19]
+        >>> parse_elements(["3-5", "Ne"])
+        [3, 4, 5, 10]
     """
     result: set[int] = set()
     for token in tokens:
@@ -424,17 +475,24 @@ def parse_elements(tokens: Iterable[int | str]) -> list[int]:
 def am_letter_to_int(letter: str) -> int:
     """Convert an angular momentum letter label to its integer value.
 
-    :param letter: angular momentum label (e.g. 's', 'p', 'd', 'f')
-    :return: integer angular momentum value
+    Args:
+        letter: angular momentum label (e.g. 's', 'p', 'd', 'f')
 
-    >>> am_letter_to_int('s')
-    0
-    >>> am_letter_to_int('p')
-    1
-    >>> am_letter_to_int('d')
-    2
-    >>> am_letter_to_int('f')
-    3
+    Returns:
+        Integer angular momentum value
+
+    Raises:
+        ValueError: letter is not a known angular momentum label
+
+    Examples:
+        >>> am_letter_to_int('s')
+        0
+        >>> am_letter_to_int('p')
+        1
+        >>> am_letter_to_int('d')
+        2
+        >>> am_letter_to_int('f')
+        3
     """
     if letter not in spherical_harmonics:
         raise ValueError(f"Unknown angular momentum label: {letter!r}")
@@ -451,10 +509,13 @@ def remove_angular_momentum(
     Multi-angular-momentum shells (e.g. sp, spd) are split into single-AM shells
     before filtering so that only the targeted AM is removed.
 
-    :param basis_dict: BSE basis set dictionary (from bse.get_basis or bse.read_formatted_basis_*)
-    :param am_to_remove: set of integer angular momentum values to remove
-    :param elements: atomic numbers of elements to edit; `None` edits all elements
-    :return: new basis set dictionary with the specified shells removed from the target elements
+    Args:
+        basis_dict: BSE basis set dictionary (from bse.get_basis or bse.read_formatted_basis_*)
+        am_to_remove: integer angular momentum values to remove
+        elements: atomic numbers of elements to edit; `None` edits all elements
+
+    Returns:
+        New basis set dictionary with specified shells removed from target elements
     """
     result = manip.uncontract_spdf(basis_dict)
     for z, element_data in result["elements"].items():
@@ -494,17 +555,21 @@ EXTENSION_TO_FORMAT = _build_extension_format_map()
 def guess_format(path: str) -> str | None:
     """Guess a BSE writer format key from a file path's extension.
 
-    :param path: output file path (e.g. `'def2-TZVP.gbs'`)
-    :return: BSE writer format key, or `None` if the extension is unrecognized
+    Args:
+        path: output file path (e.g. `'def2-TZVP.gbs'`)
 
-    >>> guess_format("def2-TZVP.gbs")
-    'gaussian94'
-    >>> guess_format("basis.nw")
-    'nwchem'
-    >>> guess_format("basis.unknown") is None
-    True
-    >>> guess_format("no_extension") is None
-    True
+    Returns:
+        BSE writer format key, or `None` if extension is unrecognized
+
+    Examples:
+        >>> guess_format("def2-TZVP.gbs")
+        'gaussian94'
+        >>> guess_format("basis.nw")
+        'nwchem'
+        >>> guess_format("basis.unknown") is None
+        True
+        >>> guess_format("no_extension") is None
+        True
     """
     ext = os.path.splitext(path)[1].lower()
     return EXTENSION_TO_FORMAT.get(ext) if ext else None
@@ -526,16 +591,23 @@ def edit_basis(
     When *elements* is specified, AM removal applies only to those elements; all other
     elements in the basis set are written unchanged.
 
-    :param basis: BSE basis set name; required when *input_file* is not provided
-    :param elements: elements whose shells will be edited; `None` edits all elements
-    :param remove: angular momentum letter labels to remove (e.g. `['f', 'g']`)
-    :param fmt: output format key accepted by BSE (default `'nwchem'`)
-    :param input_file: path to a local formatted basis set file to read instead of BSE
-    :return: formatted basis set string
+    Args:
+        basis: BSE basis set name; required when *input_file* is not provided
+        elements: elements whose shells will be edited; `None` edits all elements
+        remove: angular momentum letter labels to remove (e.g. `['f', 'g']`)
+        fmt: output format key accepted by BSE (default `'nwchem'`)
+        input_file: path to local formatted basis set file to read instead of BSE
 
-    >>> result = edit_basis("sto-3g", elements=["H", "C"], remove=["p"], fmt="nwchem")
-    >>> "H    S" in result and "C    P" not in result
-    True
+    Returns:
+        Formatted basis set string
+
+    Raises:
+        ValueError: neither `basis` nor `input_file` is provided
+
+    Examples:
+        >>> result = edit_basis("sto-3g", elements=["H", "C"], remove=["p"], fmt="nwchem")
+        >>> "H    S" in result and "C    P" not in result
+        True
     """
     if input_file is not None:
         basis_dict: dict = bse.read_formatted_basis_file(input_file)
@@ -558,15 +630,21 @@ T = TypeVar("T", int, float, str)
 def searchsorted(value: T, target: Iterable[T], reversed: bool = False) -> int:
     """Find where in a sorted iterable a value would fit.
 
-    Note: values matching existing values are placed after
-    :param value: value to insert
-    :param target: iterable to examine
-    :param reversed: is the target sorted in descending order
+    Values equal to an existing value are placed after that value.
 
-    >>> searchsorted(3, [2, 3, 4, 5])
-    2
-    >>> searchsorted(3, [5, 4, 3, 2], reversed=True)
-    3
+    Args:
+        value: value to insert
+        target: iterable to examine
+        reversed: whether target is sorted in descending order
+
+    Returns:
+        Index where value would be inserted
+
+    Examples:
+        >>> searchsorted(3, [2, 3, 4, 5])
+        2
+        >>> searchsorted(3, [5, 4, 3, 2], reversed=True)
+        3
     """
     i = 0
     for i, v in enumerate(target):
