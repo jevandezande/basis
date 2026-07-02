@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 
 import basis_set_exchange as bse  # type:ignore
 
-from .basis import edit_basis, table
+from .basis import edit_basis, guess_format, table
 
 
 def show_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
@@ -69,8 +69,9 @@ def edit_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         "-f",
         "--format",
         choices=sorted(bse.get_writer_formats()),
-        default="nwchem",
-        help="Output format [%(default)s].",
+        default=None,
+        help="Output format. Guessed from the output file extension when omitted, "
+        "falling back to nwchem.",
     )
 
     return parser
@@ -96,19 +97,30 @@ def edit_cli(args: object) -> None:
     """Run the 'edit' subcommand."""
     basis = args.basis  # type:ignore[attr-defined]
     input_file = args.input  # type:ignore[attr-defined]
+    output = args.output  # type:ignore[attr-defined]
 
     if basis is None and input_file is None:
         sys.exit("error: one of 'basis' or '--input' is required")
+
+    fmt = args.format  # type:ignore[attr-defined]
+    if fmt is None:
+        if output is not None:
+            fmt = guess_format(output)
+            if fmt is None:
+                print(
+                    f"warning: could not guess format from '{output}', using nwchem",
+                    file=sys.stderr,
+                )
+        fmt = fmt or "nwchem"
 
     result = edit_basis(
         basis=basis,
         elements=args.elements,  # type:ignore[attr-defined]
         remove=args.remove,  # type:ignore[attr-defined]
-        fmt=args.format,  # type:ignore[attr-defined]
+        fmt=fmt,
         input_file=input_file,
     )
 
-    output = args.output  # type:ignore[attr-defined]
     if output is None:
         print(result)
     else:

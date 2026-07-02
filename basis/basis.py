@@ -1,11 +1,12 @@
 """Module for counting basis functions in basis sets using Basis Set Exchange."""
 
+import os
 from collections import defaultdict
 from itertools import zip_longest
 from typing import Container, Iterable, Literal, TypeVar
 
 import basis_set_exchange as bse  # type:ignore
-from basis_set_exchange import manip  # type:ignore
+from basis_set_exchange import manip, writers  # type:ignore
 
 # {element: (contracted_counts, uncontracted_counts)}
 BASIS_COUNT = dict[int, tuple[list[int], list[int]]]
@@ -389,11 +390,11 @@ def parse_elements(tokens: Iterable[int | str]) -> list[int]:
     """Parse element tokens into a list of atomic numbers, expanding ranges.
 
     Each token is either a single element (symbol or atomic number) or a range of
-    the form ``start-end`` where both endpoints are inclusive and may be symbols or
+    the form `start-end` where both endpoints are inclusive and may be symbols or
     atomic numbers.  Tokens are whitespace- or argument-separated; the hyphen is used
     exclusively as a range separator.
 
-    :param tokens: iterable of element tokens (e.g. ``["H", "Li-Ne", "19-20"]``)
+    :param tokens: iterable of element tokens (e.g. `["H", "Li-Ne", "19-20"]`)
     :return: sorted, deduplicated list of atomic numbers
 
     >>> parse_elements(["H"])
@@ -452,7 +453,7 @@ def remove_angular_momentum(
 
     :param basis_dict: BSE basis set dictionary (from bse.get_basis or bse.read_formatted_basis_*)
     :param am_to_remove: set of integer angular momentum values to remove
-    :param elements: atomic numbers of elements to edit; ``None`` edits all elements
+    :param elements: atomic numbers of elements to edit; `None` edits all elements
     :return: new basis set dictionary with the specified shells removed from the target elements
     """
     result = manip.uncontract_spdf(basis_dict)
@@ -465,6 +466,48 @@ def remove_angular_momentum(
             if not set(shell["angular_momentum"]).issubset(am_to_remove)
         ]
     return result
+
+
+# BSE assigns each writer a recommended extension, but several formats share one
+# (e.g. .gbs -> gaussian94/psi4/xtron).  A canonical format is preferred for those.
+_EXTENSION_FORMAT_PREFERENCES = {
+    ".gbs": "gaussian94",
+    ".bas": "gamess_us",
+    ".json": "json",
+    ".molcas": "molcas",
+}
+
+
+def _build_extension_format_map() -> dict[str, str]:
+    """Build a mapping of lowercased file extension -> BSE writer format key."""
+    mapping: dict[str, str] = {}
+    for fmt in bse.get_writer_formats():
+        ext = writers.get_format_extension(fmt).lower()
+        mapping.setdefault(ext, fmt)
+    mapping.update(_EXTENSION_FORMAT_PREFERENCES)
+    return mapping
+
+
+EXTENSION_TO_FORMAT = _build_extension_format_map()
+
+
+def guess_format(path: str) -> str | None:
+    """Guess a BSE writer format key from a file path's extension.
+
+    :param path: output file path (e.g. `'def2-TZVP.gbs'`)
+    :return: BSE writer format key, or `None` if the extension is unrecognized
+
+    >>> guess_format("def2-TZVP.gbs")
+    'gaussian94'
+    >>> guess_format("basis.nw")
+    'nwchem'
+    >>> guess_format("basis.unknown") is None
+    True
+    >>> guess_format("no_extension") is None
+    True
+    """
+    ext = os.path.splitext(path)[1].lower()
+    return EXTENSION_TO_FORMAT.get(ext) if ext else None
 
 
 def edit_basis(
@@ -484,9 +527,9 @@ def edit_basis(
     elements in the basis set are written unchanged.
 
     :param basis: BSE basis set name; required when *input_file* is not provided
-    :param elements: elements whose shells will be edited; ``None`` edits all elements
-    :param remove: angular momentum letter labels to remove (e.g. ``['f', 'g']``)
-    :param fmt: output format key accepted by BSE (default ``'nwchem'``)
+    :param elements: elements whose shells will be edited; `None` edits all elements
+    :param remove: angular momentum letter labels to remove (e.g. `['f', 'g']`)
+    :param fmt: output format key accepted by BSE (default `'nwchem'`)
     :param input_file: path to a local formatted basis set file to read instead of BSE
     :return: formatted basis set string
 
